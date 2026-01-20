@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkateCoach Pro - Academy Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; margin: 0; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    // MOCK DATA
+    const mockCoaches = [
+      { id: 1, name: 'John Smith', role: 'Senior Coach', location: 'Central Ice Rink', status: 'present', sessions: 45, email: 'john@academy.com', phone: '+91 98765 43210', joinDate: '2023-03-15', rate: 500 },
+      { id: 2, name: 'Sarah Lee', role: 'Junior Coach', location: 'West Arena', status: 'leave', sessions: 38, email: 'sarah@academy.com', phone: '+91 98765 43211', joinDate: '2023-06-20', rate: 400 },
+      { id: 3, name: 'Mike Chen', role: 'Head Coach', location: 'Central Ice Rink', status: 'present', sessions: 52, email: 'mike@academy.com', phone: '+91 98765 43212', joinDate: '2022-01-10', rate: 600 },
+      { id: 4, name: 'Emma Wilson', role: 'Coach', location: 'East Pavilion', status: 'absent', sessions: 40, email: 'emma@academy.com', phone: '+91 98765 43213', joinDate: '2023-09-01', rate: 450 },
+      { id: 5, name: 'David Park', role: 'Senior Coach', location: 'West Arena', status: 'present', sessions: 48, email: 'david@academy.com', phone: '+91 98765 43214', joinDate: '2022-08-15', rate: 500 },
+      { id: 6, name: 'Lisa Kumar', role: 'Coach', location: 'Central Ice Rink', status: 'present', sessions: 35, email: 'lisa@academy.com', phone: '+91 98765 43215', joinDate: '2024-01-05', rate: 450 },
+    ];
+    const mockLocations = [
+      { id: 1, name: 'Central Ice Rink', address: '123 Sports Complex, Mumbai', hours: '6AM-10PM', coaches: 5, sessions: 12, status: 'active', contact: 'Raj Mehta', phone: '+91 98765 00001' },
+      { id: 2, name: 'West Arena', address: '456 Stadium Road, Mumbai', hours: '7AM-9PM', coaches: 3, sessions: 8, status: 'active', contact: 'Priya Singh', phone: '+91 98765 00002' },
+      { id: 3, name: 'East Pavilion', address: '789 Sports Hub, Mumbai', hours: '6AM-8PM', coaches: 2, sessions: 6, status: 'active', contact: 'Amit Patel', phone: '+91 98765 00003' },
+      { id: 4, name: 'North Center', address: '321 Athletic Park, Mumbai', hours: '8AM-6PM', coaches: 0, sessions: 0, status: 'inactive', contact: 'Neha Gupta', phone: '+91 98765 00004' },
+    ];
+    const mockSchedules = [
+      { id: 1, coach: 'John Smith', coachId: 1, location: 'Central Ice Rink', date: '2025-01-17', startTime: '06:00', endTime: '08:00', status: 'completed' },
+      { id: 2, coach: 'Sarah Lee', coachId: 2, location: 'West Arena', date: '2025-01-17', startTime: '07:00', endTime: '09:00', status: 'in-progress' },
+      { id: 3, coach: 'Mike Chen', coachId: 3, location: 'Central Ice Rink', date: '2025-01-17', startTime: '09:00', endTime: '11:00', status: 'upcoming' },
+      { id: 4, coach: 'Emma Wilson', coachId: 4, location: 'East Pavilion', date: '2025-01-17', startTime: '08:00', endTime: '10:00', status: 'upcoming' },
+      { id: 5, coach: 'David Park', coachId: 5, location: 'West Arena', date: '2025-01-17', startTime: '10:00', endTime: '12:00', status: 'upcoming' },
+      { id: 6, coach: 'John Smith', coachId: 1, location: 'West Arena', date: '2025-01-17', startTime: '14:00', endTime: '16:00', status: 'upcoming' },
+    ];
+    const mockLeaves = [
+      { id: 1, coach: 'Sarah Lee', type: 'Sick Leave', from: '2025-01-20', to: '2025-01-21', days: 2, reason: 'Medical appointment', status: 'pending' },
+      { id: 2, coach: 'Mike Chen', type: 'Casual Leave', from: '2025-01-25', to: '2025-01-25', days: 1, reason: 'Personal work', status: 'pending' },
+      { id: 3, coach: 'Emma Wilson', type: 'Earned Leave', from: '2025-02-01', to: '2025-02-05', days: 5, reason: 'Family vacation', status: 'approved' },
+    ];
+    const mockAttendance = [
+      { id: 1, coach: 'John Smith', scheduled: '06:00-08:00', location: 'Central Ice Rink', checkIn: '05:55', checkOut: '08:02', duration: '2h 7m', status: 'complete' },
+      { id: 2, coach: 'Sarah Lee', scheduled: '07:00-09:00', location: 'West Arena', checkIn: '07:15', checkOut: null, duration: '1h 45m', status: 'late' },
+      { id: 3, coach: 'Mike Chen', scheduled: '09:00-11:00', location: 'Central Ice Rink', checkIn: null, checkOut: null, duration: '--', status: 'pending' },
+      { id: 4, coach: 'David Park', scheduled: '10:00-12:00', location: 'West Arena', checkIn: null, checkOut: null, duration: '--', status: 'pending' },
+    ];
+
+    // ICONS (SVG)
+    const icons = {
+      Home: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+      Users: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+      MapPin: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+      Calendar: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+      Check: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+      File: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+      Dollar: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+      Settings: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+      Menu: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
+      Bell: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
+      Search: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>,
+      Logout: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>,
+      Plus: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+      X: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+      Eye: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
+      Edit: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+      Grid: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
+      List: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
+      Download: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>,
+      ChevronRight: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
+      ChevronLeft: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
+    };
+
+    // COMPONENTS
+    const StatusBadge = ({ status }) => {
+      const styles = {
+        present: 'bg-emerald-50 text-emerald-700', active: 'bg-emerald-50 text-emerald-700', complete: 'bg-emerald-50 text-emerald-700',
+        completed: 'bg-emerald-50 text-emerald-700', approved: 'bg-emerald-50 text-emerald-700', leave: 'bg-amber-50 text-amber-700',
+        pending: 'bg-amber-50 text-amber-700', 'in-progress': 'bg-sky-50 text-sky-700', upcoming: 'bg-sky-50 text-sky-700',
+        absent: 'bg-red-50 text-red-700', late: 'bg-orange-50 text-orange-700', rejected: 'bg-red-50 text-red-700', inactive: 'bg-gray-100 text-gray-600',
+      };
+      return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${styles[status] || styles.pending}`}>{status.replace('-', ' ')}</span>;
+    };
+
+    const Avatar = ({ name, size = 'md' }) => {
+      const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2);
+      const sizes = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-12 h-12 text-base', xl: 'w-16 h-16 text-xl' };
+      const colors = ['bg-sky-500', 'bg-violet-500', 'bg-emerald-500', 'bg-orange-500', 'bg-rose-500', 'bg-cyan-500'];
+      const idx = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
+      return <div className={`${sizes[size]} ${colors[idx]} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>{initials}</div>;
+    };
+
+    const Button = ({ children, variant = 'primary', size = 'md', icon, onClick, className = '' }) => {
+      const vars = { primary: 'bg-sky-600 text-white hover:bg-sky-700', secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200', success: 'bg-emerald-600 text-white hover:bg-emerald-700', danger: 'bg-red-600 text-white hover:bg-red-700', ghost: 'text-gray-600 hover:bg-gray-100', outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50' };
+      const szs = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2 text-sm', lg: 'px-5 py-2.5 text-base' };
+      return <button onClick={onClick} className={`${vars[variant]} ${szs[size]} rounded-lg font-medium inline-flex items-center justify-center gap-2 ${className}`}>{icon && icons[icon]}{children}</button>;
+    };
+
+    const Card = ({ children, className = '', onClick }) => <div className={`bg-white rounded-xl border border-gray-100 ${onClick ? 'cursor-pointer hover:shadow-md' : ''} ${className}`} onClick={onClick}>{children}</div>;
+
+    const Modal = ({ isOpen, onClose, title, children }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b"><h2 className="text-lg font-semibold">{title}</h2><button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg">{icons.X}</button></div>
+            <div className="p-4 overflow-y-auto flex-1">{children}</div>
+          </div>
+        </div>
+      );
+    };
+
+    const Input = ({ label, type = 'text', placeholder, value, onChange }) => (
+      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label><input type={type} placeholder={placeholder} value={value} onChange={onChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" /></div>
+    );
+
+    const Select = ({ label, options, value, onChange, placeholder }) => (
+      <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label><select value={value} onChange={onChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">{placeholder && <option value="">{placeholder}</option>}{options.map((o, i) => <option key={i} value={o}>{o}</option>)}</select></div>
+    );
+
+    // LOGIN
+    const LoginPage = ({ onLogin }) => {
+      const [role, setRole] = useState('admin');
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-sky-900 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl">
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 bg-sky-600 rounded-xl flex items-center justify-center mx-auto mb-3"><span className="text-2xl">🏒</span></div>
+              <h1 className="text-xl font-bold text-gray-900">SkateCoach Pro</h1>
+              <p className="text-sm text-gray-500 mt-1">Academy Management System</p>
+            </div>
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-6">
+              {['admin', 'hr', 'coach'].map(r => <button key={r} onClick={() => setRole(r)} className={`flex-1 py-2 text-sm font-medium rounded-md capitalize ${role === r ? 'bg-white shadow-sm' : 'text-gray-600'}`}>{r}</button>)}
+            </div>
+            <div className="space-y-4">
+              <Input label="Email" type="email" placeholder="you@academy.com" />
+              <Input label="Password" type="password" placeholder="••••••••" />
+              <Button className="w-full" size="lg" onClick={() => onLogin(role)}>Sign In</Button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // SIDEBAR
+    const Sidebar = ({ page, setPage, isOpen, onClose, role }) => {
+      const menus = {
+        admin: [['dashboard', 'Home', 'Dashboard'], ['coaches', 'Users', 'Coaches'], ['locations', 'MapPin', 'Locations'], ['schedules', 'Calendar', 'Schedules'], ['attendance', 'Check', 'Attendance'], ['leave', 'File', 'Leave'], ['payroll', 'Dollar', 'Payroll'], ['settings', 'Settings', 'Settings']],
+        hr: [['dashboard', 'Home', 'Dashboard'], ['coaches', 'Users', 'Coaches'], ['attendance', 'Check', 'Attendance'], ['leave', 'File', 'Leave'], ['payroll', 'Dollar', 'Payroll']],
+        coach: [['dashboard', 'Home', 'Dashboard'], ['schedules', 'Calendar', 'My Schedule'], ['attendance', 'Check', 'Check In'], ['leave', 'File', 'Leave'], ['payroll', 'Dollar', 'Payments']]
+      };
+      const items = menus[role] || menus.admin;
+      return (
+        <>
+          {isOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />}
+          <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r transform lg:transform-none ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className="flex flex-col h-full">
+              <div className="p-4 border-b"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-sky-600 rounded-lg flex items-center justify-center"><span>🏒</span></div><div><h1 className="font-bold text-gray-900">SkateCoach Pro</h1><p className="text-xs text-gray-500 capitalize">{role}</p></div></div></div>
+              <nav className="flex-1 p-3 space-y-1">
+                {items.map(([id, icon, label]) => <button key={id} onClick={() => { setPage(id); onClose(); }} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${page === id ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-50'}`}>{icons[icon]}{label}</button>)}
+              </nav>
+              <div className="p-3 border-t"><div className="flex items-center gap-3 p-2"><Avatar name={role === 'coach' ? 'John Smith' : 'Admin User'} size="sm" /><div className="flex-1"><p className="text-sm font-medium truncate">{role === 'coach' ? 'John Smith' : 'Admin User'}</p><p className="text-xs text-gray-500 capitalize">{role}</p></div><button className="p-1.5 hover:bg-gray-100 rounded-lg">{icons.Logout}</button></div></div>
+            </div>
+          </aside>
+        </>
+      );
+    };
+
+    // HEADER
+    const Header = ({ onMenu, title }) => (
+      <header className="sticky top-0 z-30 bg-white border-b">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3"><button onClick={onMenu} className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">{icons.Menu}</button><h1 className="text-lg font-semibold">{title}</h1></div>
+          <div className="flex items-center gap-2"><div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">{icons.Search}<input placeholder="Search..." className="bg-transparent outline-none text-sm w-32" /></div><button className="relative p-2 hover:bg-gray-100 rounded-lg">{icons.Bell}<span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" /></button></div>
+        </div>
+      </header>
+    );
+
+    // DASHBOARD
+    const Dashboard = ({ role }) => {
+      if (role === 'coach') return (
+        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+          <div className="text-center"><h2 className="text-xl font-bold">Good Morning, John! 👋</h2><p className="text-gray-500 text-sm">Ready for today's sessions?</p></div>
+          <Card className="p-4">
+            <h3 className="font-semibold mb-4">Today's Schedule</h3>
+            {mockSchedules.filter(s => s.coachId === 1).slice(0, 2).map((s, i) => (
+              <div key={s.id} className={`p-4 rounded-lg border-2 mb-3 ${i === 0 ? 'border-sky-200 bg-sky-50' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex justify-between mb-2"><span className={`text-sm font-medium ${i === 0 ? 'text-sky-600' : 'text-gray-500'}`}>{i === 0 ? '● Next' : 'Later'}</span><span className="text-sm">{s.startTime} - {s.endTime}</span></div>
+                <p className="font-medium">{s.location}</p>
+                {i === 0 && <Button className="w-full mt-3" variant="success" size="lg">CHECK IN</Button>}
+              </div>
+            ))}
+          </Card>
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="p-4 text-center"><p className="text-2xl font-bold">45</p><p className="text-xs text-gray-500">Sessions</p></Card>
+            <Card className="p-4 text-center"><p className="text-2xl font-bold">92.5</p><p className="text-xs text-gray-500">Hours</p></Card>
+            <Card className="p-4 text-center"><p className="text-2xl font-bold text-emerald-600">₹22.5K</p><p className="text-xs text-gray-500">Earnings</p></Card>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className={`rounded-xl p-5 text-white ${role === 'hr' ? 'bg-gradient-to-r from-violet-600 to-purple-600' : 'bg-gradient-to-r from-sky-600 to-cyan-600'}`}>
+            <h2 className="text-xl font-bold">Good Morning, {role === 'hr' ? 'HR Manager' : 'Admin'}! 👋</h2>
+            <p className="text-white/80 mt-1 text-sm">Here's what's happening today.</p>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-5"><div className="w-10 h-10 bg-sky-500 rounded-lg flex items-center justify-center mb-3">{icons.Users}</div><p className="text-2xl font-bold">24</p><p className="text-sm text-gray-500">Coaches</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mb-3">{icons.MapPin}</div><p className="text-2xl font-bold">8</p><p className="text-sm text-gray-500">Locations</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center mb-3">{icons.Check}</div><p className="text-2xl font-bold">89%</p><p className="text-sm text-gray-500">Attendance</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mb-3">{icons.File}</div><p className="text-2xl font-bold">5</p><p className="text-sm text-gray-500">Leaves</p></Card>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 p-4">
+              <div className="flex justify-between mb-4"><h3 className="font-semibold">Today's Schedule</h3><button className="text-sm text-sky-600 flex items-center gap-1">View All {icons.ChevronRight}</button></div>
+              {mockSchedules.slice(0, 4).map(s => (
+                <div key={s.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-2">
+                  <Avatar name={s.coach} size="sm" />
+                  <div className="flex-1 min-w-0"><p className="font-medium text-sm truncate">{s.coach}</p><p className="text-xs text-gray-500">{s.location}</p></div>
+                  <div className="text-right"><p className="text-sm font-medium">{s.startTime}-{s.endTime}</p><StatusBadge status={s.status} /></div>
+                </div>
+              ))}
+            </Card>
+            <Card className="p-4">
+              <h3 className="font-semibold mb-4">Pending Leaves</h3>
+              {mockLeaves.filter(l => l.status === 'pending').map(l => (
+                <div key={l.id} className="p-3 bg-amber-50 border border-amber-100 rounded-lg mb-3">
+                  <div className="flex items-center gap-2 mb-2"><Avatar name={l.coach} size="sm" /><div><p className="font-medium text-sm">{l.coach}</p><p className="text-xs text-gray-500">{l.type}</p></div></div>
+                  <p className="text-xs text-gray-600 mb-2">{l.days} days • {l.from}</p>
+                  <div className="flex gap-2"><Button size="sm" variant="success" className="flex-1">Approve</Button><Button size="sm" variant="danger" className="flex-1">Reject</Button></div>
+                </div>
+              ))}
+            </Card>
+          </div>
+        </div>
+      );
+    };
+
+    // COACHES PAGE
+    const CoachesPage = ({ role }) => {
+      const [view, setView] = useState('grid');
+      const [modal, setModal] = useState(false);
+      const [selected, setSelected] = useState(null);
+      const [filter, setFilter] = useState('all');
+      const coaches = filter === 'all' ? mockCoaches : mockCoaches.filter(c => c.status === filter);
+
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div><h2 className="text-xl font-bold">Coach Management</h2><p className="text-sm text-gray-500">Manage all coaches</p></div>
+            {role === 'admin' && <Button icon="Plus" onClick={() => setModal(true)}>Add Coach</Button>}
+          </div>
+          <Card className="p-3">
+            <div className="flex flex-wrap gap-2 justify-between">
+              <div className="flex gap-2">{['all', 'present', 'leave', 'absent'].map(s => <button key={s} onClick={() => setFilter(s)} className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${filter === s ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-600'}`}>{s}</button>)}</div>
+              <div className="flex gap-1 p-1 bg-gray-100 rounded-lg"><button onClick={() => setView('grid')} className={`p-1.5 rounded ${view === 'grid' ? 'bg-white shadow-sm' : ''}`}>{icons.Grid}</button><button onClick={() => setView('list')} className={`p-1.5 rounded ${view === 'list' ? 'bg-white shadow-sm' : ''}`}>{icons.List}</button></div>
+            </div>
+          </Card>
+          {view === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {coaches.map(c => (
+                <Card key={c.id} className="p-4 cursor-pointer hover:shadow-md" onClick={() => setSelected(c)}>
+                  <div className="flex justify-between mb-3"><Avatar name={c.name} size="lg" /><StatusBadge status={c.status} /></div>
+                  <h3 className="font-semibold">{c.name}</h3><p className="text-sm text-gray-500">{c.role}</p>
+                  <div className="mt-3 pt-3 border-t space-y-1.5">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">{icons.MapPin}<span>{c.location}</span></div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">{icons.Calendar}<span>{c.sessions} sessions</span></div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Coach</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Role</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Location</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Status</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Actions</th></tr></thead>
+                <tbody className="divide-y">{coaches.map(c => <tr key={c.id} className="hover:bg-gray-50"><td className="px-4 py-3"><div className="flex items-center gap-3"><Avatar name={c.name} size="sm" /><div><p className="font-medium">{c.name}</p><p className="text-xs text-gray-500">{c.email}</p></div></div></td><td className="px-4 py-3 text-sm">{c.role}</td><td className="px-4 py-3 text-sm">{c.location}</td><td className="px-4 py-3"><StatusBadge status={c.status} /></td><td className="px-4 py-3"><button onClick={() => setSelected(c)} className="p-1.5 hover:bg-gray-100 rounded">{icons.Eye}</button></td></tr>)}</tbody>
+              </table>
+            </Card>
+          )}
+          <Modal isOpen={modal} onClose={() => setModal(false)} title="Add New Coach">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4"><Input label="Full Name" placeholder="John Doe" /><Input label="Email" placeholder="john@academy.com" /></div>
+              <div className="grid grid-cols-2 gap-4"><Input label="Phone" placeholder="+91 98765" /><Select label="Role" options={['Head Coach', 'Senior Coach', 'Coach', 'Junior Coach']} placeholder="Select" /></div>
+              <Select label="Location" options={mockLocations.filter(l => l.status === 'active').map(l => l.name)} placeholder="Select" />
+              <div className="flex justify-end gap-3 pt-4 border-t"><Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button><Button onClick={() => setModal(false)}>Save</Button></div>
+            </div>
+          </Modal>
+          <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Coach Profile">
+            {selected && (
+              <div className="space-y-4">
+                <div className="flex items-start gap-4"><Avatar name={selected.name} size="xl" /><div><h3 className="text-lg font-bold">{selected.name}</h3><p className="text-gray-500">{selected.role}</p><div className="mt-2"><StatusBadge status={selected.status} /></div></div></div>
+                <div className="grid grid-cols-2 gap-4">{[['Email', selected.email], ['Phone', selected.phone], ['Location', selected.location], ['Rate', `₹${selected.rate}/session`]].map(([l, v]) => <div key={l} className="p-3 bg-gray-50 rounded-lg"><p className="text-xs text-gray-500">{l}</p><p className="font-medium mt-1">{v}</p></div>)}</div>
+                <div className="grid grid-cols-3 gap-4"><div className="text-center p-3 bg-sky-50 rounded-lg"><p className="text-xl font-bold text-sky-600">{selected.sessions}</p><p className="text-xs">Sessions</p></div><div className="text-center p-3 bg-emerald-50 rounded-lg"><p className="text-xl font-bold text-emerald-600">95%</p><p className="text-xs">Attendance</p></div><div className="text-center p-3 bg-violet-50 rounded-lg"><p className="text-xl font-bold text-violet-600">₹{(selected.sessions * selected.rate / 1000).toFixed(1)}K</p><p className="text-xs">Earnings</p></div></div>
+              </div>
+            )}
+          </Modal>
+        </div>
+      );
+    };
+
+    // LOCATIONS PAGE
+    const LocationsPage = ({ role }) => {
+      const [modal, setModal] = useState(false);
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div><h2 className="text-xl font-bold">Locations</h2><p className="text-sm text-gray-500">Manage venues</p></div>
+            {role === 'admin' && <Button icon="Plus" onClick={() => setModal(true)}>Add Location</Button>}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mockLocations.map(l => (
+              <Card key={l.id} className="overflow-hidden">
+                <div className={`h-24 ${l.status === 'active' ? 'bg-gradient-to-br from-sky-400 to-cyan-500' : 'bg-gray-300'} flex items-center justify-center relative`}>{icons.MapPin}<div className="absolute top-2 right-2"><StatusBadge status={l.status} /></div></div>
+                <div className="p-4"><h3 className="font-semibold">{l.name}</h3><p className="text-sm text-gray-500 mt-1">{l.address}</p><div className="mt-3 pt-3 border-t grid grid-cols-2 gap-2 text-sm"><div><p className="text-gray-500">Hours</p><p className="font-medium">{l.hours}</p></div><div><p className="text-gray-500">Coaches</p><p className="font-medium">{l.coaches}</p></div></div></div>
+              </Card>
+            ))}
+          </div>
+          <Modal isOpen={modal} onClose={() => setModal(false)} title="Add Location">
+            <div className="space-y-4">
+              <Input label="Name" placeholder="Central Ice Rink" /><Input label="Address" placeholder="123 Sports Complex" />
+              <div className="grid grid-cols-2 gap-4"><Input label="Contact" placeholder="John" /><Input label="Phone" placeholder="+91" /></div>
+              <div className="flex justify-end gap-3 pt-4 border-t"><Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button><Button onClick={() => setModal(false)}>Save</Button></div>
+            </div>
+          </Modal>
+        </div>
+      );
+    };
+
+    // SCHEDULES
+    const SchedulesPage = ({ role }) => {
+      const [view, setView] = useState('list');
+      const schedules = role === 'coach' ? mockSchedules.filter(s => s.coachId === 1) : mockSchedules;
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div><h2 className="text-xl font-bold">{role === 'coach' ? 'My Schedule' : 'Schedules'}</h2></div>
+            <div className="flex gap-2">
+              <div className="flex gap-1 p-1 bg-gray-100 rounded-lg"><button onClick={() => setView('list')} className={`px-3 py-1.5 text-sm rounded ${view === 'list' ? 'bg-white shadow-sm' : ''}`}>List</button><button onClick={() => setView('calendar')} className={`px-3 py-1.5 text-sm rounded ${view === 'calendar' ? 'bg-white shadow-sm' : ''}`}>Calendar</button></div>
+              {role === 'admin' && <Button icon="Plus">Create</Button>}
+            </div>
+          </div>
+          {view === 'calendar' ? (
+            <Card className="p-4">
+              <div className="flex justify-between mb-4"><h3 className="font-semibold">January 2025</h3><div className="flex gap-2"><button className="p-2 hover:bg-gray-100 rounded-lg">{icons.ChevronLeft}</button><Button variant="secondary" size="sm">Today</Button><button className="p-2 hover:bg-gray-100 rounded-lg">{icons.ChevronRight}</button></div></div>
+              <div className="grid grid-cols-7 gap-1">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-center text-xs font-semibold text-gray-500 py-2">{d}</div>)}
+                {Array.from({ length: 3 }).map((_, i) => <div key={`e${i}`} className="h-16 bg-gray-50 rounded" />)}
+                {Array.from({ length: 31 }).map((_, i) => {
+                  const d = i + 1, today = d === 17, has = [17, 18, 20, 22, 24].includes(d);
+                  return <div key={d} className={`h-16 p-1.5 rounded border ${today ? 'bg-sky-50 border-sky-200' : 'border-gray-100'}`}><span className={`text-sm font-medium ${today ? 'text-sky-600' : ''}`}>{d}</span>{has && <div className="h-1 bg-sky-400 rounded-full mt-1" />}</div>;
+                })}
+              </div>
+            </Card>
+          ) : (
+            <Card className="overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Date</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Time</th>{role !== 'coach' && <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Coach</th>}<th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Location</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Status</th></tr></thead>
+                <tbody className="divide-y">{schedules.map(s => <tr key={s.id} className="hover:bg-gray-50"><td className="px-4 py-3 text-sm font-medium">{s.date}</td><td className="px-4 py-3 text-sm">{s.startTime}-{s.endTime}</td>{role !== 'coach' && <td className="px-4 py-3"><div className="flex items-center gap-2"><Avatar name={s.coach} size="sm" /><span className="text-sm">{s.coach}</span></div></td>}<td className="px-4 py-3 text-sm">{s.location}</td><td className="px-4 py-3"><StatusBadge status={s.status} /></td></tr>)}</tbody>
+              </table>
+            </Card>
+          )}
+        </div>
+      );
+    };
+
+    // ATTENDANCE
+    const AttendancePage = ({ role }) => {
+      const [checkedIn, setCheckedIn] = useState(false);
+      if (role === 'coach') return (
+        <div className="p-4 space-y-6 max-w-lg mx-auto">
+          <div className="text-center"><h2 className="text-xl font-bold">Attendance</h2><p className="text-sm text-gray-500">Check in for your sessions</p></div>
+          <Card className={`p-5 border-2 ${checkedIn ? 'border-emerald-300 bg-emerald-50' : 'border-sky-300 bg-sky-50'}`}>
+            <div className="flex justify-between mb-3"><span className={`text-sm font-semibold ${checkedIn ? 'text-emerald-600' : 'text-sky-600'}`}>{checkedIn ? '● In Session' : '● Next'}</span><span className="text-sm">06:00-08:00</span></div>
+            <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border">{icons.MapPin}</div><div><p className="font-medium">Central Ice Rink</p><p className="text-sm text-gray-500">123 Sports Complex</p></div></div>
+            {checkedIn ? <><div className="flex justify-between text-sm mb-3"><span className="text-gray-500">Duration</span><span className="font-medium text-emerald-600">1h 23m</span></div><Button variant="danger" className="w-full" size="lg" onClick={() => setCheckedIn(false)}>CHECK OUT</Button></> : <Button variant="success" className="w-full" size="lg" onClick={() => setCheckedIn(true)}>CHECK IN</Button>}
+          </Card>
+        </div>
+      );
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h2 className="text-xl font-bold">Attendance</h2><p className="text-sm text-gray-500">Track coach attendance</p></div><Button variant="secondary" icon="Download">Export</Button></div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-5"><div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mb-3">{icons.Check}</div><p className="text-2xl font-bold">18</p><p className="text-sm text-gray-500">Present</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center mb-3">{icons.X}</div><p className="text-2xl font-bold">3</p><p className="text-sm text-gray-500">Absent</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mb-3">{icons.File}</div><p className="text-2xl font-bold">2</p><p className="text-sm text-gray-500">On Leave</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center mb-3">{icons.Calendar}</div><p className="text-2xl font-bold">1</p><p className="text-sm text-gray-500">Late</p></Card>
+          </div>
+          <Card className="p-4"><div className="flex justify-between mb-2"><span className="text-sm font-medium">Progress</span><span className="text-sm text-gray-500">18/24</span></div><div className="h-3 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: '75%' }} /></div></Card>
+          <Card className="overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Coach</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Scheduled</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Location</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">In</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Out</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Status</th></tr></thead>
+              <tbody className="divide-y">{mockAttendance.map(r => <tr key={r.id} className="hover:bg-gray-50"><td className="px-4 py-3"><div className="flex items-center gap-3"><Avatar name={r.coach} size="sm" /><span className="font-medium">{r.coach}</span></div></td><td className="px-4 py-3 text-sm">{r.scheduled}</td><td className="px-4 py-3 text-sm">{r.location}</td><td className="px-4 py-3 text-sm">{r.checkIn || '--'}</td><td className="px-4 py-3 text-sm">{r.checkOut || '--'}</td><td className="px-4 py-3"><StatusBadge status={r.status} /></td></tr>)}</tbody>
+            </table>
+          </Card>
+        </div>
+      );
+    };
+
+    // LEAVE
+    const LeavePage = ({ role }) => {
+      const [tab, setTab] = useState('pending');
+      const [modal, setModal] = useState(false);
+      if (role === 'coach') return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h2 className="text-xl font-bold">Leave</h2></div><Button icon="Plus" onClick={() => setModal(true)}>Apply</Button></div>
+          <div className="grid grid-cols-3 gap-4">{[['Casual', 8, 12, 'sky'], ['Sick', 12, 12, 'emerald'], ['Earned', 5, 15, 'violet']].map(([t, r, tot, c]) => <Card key={t} className="p-5"><p className="text-sm text-gray-500">{t}</p><p className="text-2xl font-bold mt-1">{r} <span className="text-sm font-normal text-gray-400">/ {tot}</span></p><div className="mt-3 h-2 bg-gray-100 rounded-full"><div className={`h-full bg-${c}-500 rounded-full`} style={{ width: `${(r / tot) * 100}%` }} /></div></Card>)}</div>
+          <Card className="p-4"><h3 className="font-semibold mb-4">My Requests</h3>{mockLeaves.slice(0, 3).map(l => <div key={l.id} className="flex justify-between p-4 bg-gray-50 rounded-lg mb-3"><div><p className="font-medium">{l.type}</p><p className="text-sm text-gray-500">{l.from} ({l.days} days)</p></div><StatusBadge status={l.status} /></div>)}</Card>
+          <Modal isOpen={modal} onClose={() => setModal(false)} title="Apply for Leave">
+            <div className="space-y-4"><Select label="Type" options={['Casual', 'Sick', 'Earned']} placeholder="Select" /><div className="grid grid-cols-2 gap-4"><Input label="From" type="date" /><Input label="To" type="date" /></div><div className="p-3 bg-sky-50 rounded-lg"><p className="text-sm text-sky-600">Duration: 2 days</p></div><div><label className="block text-sm font-medium mb-1.5">Reason</label><textarea className="w-full px-3 py-2 border rounded-lg text-sm" rows={3} placeholder="Reason..." /></div><div className="flex justify-end gap-3 pt-4 border-t"><Button variant="secondary" onClick={() => setModal(false)}>Cancel</Button><Button onClick={() => setModal(false)}>Submit</Button></div></div>
+          </Modal>
+        </div>
+      );
+      const leaves = mockLeaves.filter(l => tab === 'all' || l.status === tab);
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h2 className="text-xl font-bold">Leave Management</h2></div><div className="flex gap-1 p-1 bg-gray-100 rounded-lg">{['pending', 'approved', 'rejected'].map(t => <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 text-sm font-medium rounded capitalize ${tab === t ? 'bg-white shadow-sm' : ''}`}>{t}</button>)}</div></div>
+          {leaves.map(l => (
+            <Card key={l.id} className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-4 flex-1"><Avatar name={l.coach} size="lg" /><div><h3 className="font-bold">{l.coach}</h3><p className="text-gray-500 text-sm">{l.type}</p></div></div>
+                <div className="flex-1"><p className="text-sm text-gray-500">Duration</p><p className="font-medium">{l.from} - {l.to}</p><p className="text-sm text-gray-500">{l.days} day(s)</p></div>
+                <div className="flex-1"><p className="text-sm text-gray-500">Reason</p><p className="font-medium">{l.reason}</p></div>
+                <div>{l.status === 'pending' ? <div className="flex gap-2"><Button variant="success" size="sm">Approve</Button><Button variant="danger" size="sm">Reject</Button></div> : <StatusBadge status={l.status} />}</div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      );
+    };
+
+    // PAYROLL
+    const PayrollPage = ({ role }) => {
+      const data = mockCoaches.map(c => ({ ...c, base: c.sessions * c.rate, bonus: Math.floor(Math.random() * 3000), net: c.sessions * c.rate + Math.floor(Math.random() * 3000) }));
+      if (role === 'coach') return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div><h2 className="text-xl font-bold">My Payments</h2></div>
+          <Card className="p-6 bg-gradient-to-br from-sky-600 to-cyan-600 text-white">
+            <p className="text-sky-100">January 2025</p><p className="text-4xl font-bold mt-2">₹24,500</p><p className="text-sky-100 mt-1">Total Earnings</p>
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/20"><div><p className="text-sky-100 text-sm">Sessions</p><p className="text-xl font-bold">45</p></div><div><p className="text-sky-100 text-sm">Base</p><p className="text-xl font-bold">₹22,500</p></div><div><p className="text-sky-100 text-sm">Bonus</p><p className="text-xl font-bold">₹2,000</p></div></div>
+          </Card>
+          <Card className="p-4"><h3 className="font-semibold mb-4">History</h3>{['January 2025', 'December 2024', 'November 2024'].map((m, i) => <div key={m} className="flex justify-between p-4 bg-gray-50 rounded-lg mb-3"><div><p className="font-medium">{m}</p><p className="text-sm text-gray-500">{45 - i * 2} sessions</p></div><div className="text-right"><p className="font-bold">₹{(24500 - i * 1500).toLocaleString()}</p><Button variant="ghost" size="sm" icon="Download">Payslip</Button></div></div>)}</Card>
+        </div>
+      );
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><h2 className="text-xl font-bold">Payroll</h2></div><Button icon="Download">Generate All</Button></div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-5"><div className="w-10 h-10 bg-sky-500 rounded-lg flex items-center justify-center mb-3">{icons.Users}</div><p className="text-2xl font-bold">24</p><p className="text-sm text-gray-500">Coaches</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mb-3">{icons.Calendar}</div><p className="text-2xl font-bold">1,080</p><p className="text-sm text-gray-500">Sessions</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center mb-3">{icons.Dollar}</div><p className="text-2xl font-bold">₹4.85L</p><p className="text-sm text-gray-500">Total Payout</p></Card>
+            <Card className="p-5"><div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mb-3">{icons.Check}</div><p className="text-2xl font-bold">₹45K</p><p className="text-sm text-gray-500">Bonuses</p></Card>
+          </div>
+          <Card className="overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Coach</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Sessions</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Rate</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Base</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Bonus</th><th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">Net</th></tr></thead>
+              <tbody className="divide-y">{data.map(c => <tr key={c.id} className="hover:bg-gray-50"><td className="px-4 py-3"><div className="flex items-center gap-3"><Avatar name={c.name} size="sm" /><div><p className="font-medium">{c.name}</p><p className="text-xs text-gray-500">{c.role}</p></div></div></td><td className="px-4 py-3 text-sm">{c.sessions}</td><td className="px-4 py-3 text-sm">₹{c.rate}</td><td className="px-4 py-3 text-sm">₹{c.base.toLocaleString()}</td><td className="px-4 py-3 text-sm text-emerald-600">+₹{c.bonus.toLocaleString()}</td><td className="px-4 py-3 font-bold">₹{c.net.toLocaleString()}</td></tr>)}</tbody>
+            </table>
+          </Card>
+        </div>
+      );
+    };
+
+    // SETTINGS
+    const SettingsPage = () => {
+      const [section, setSection] = useState('academy');
+      return (
+        <div className="p-4 lg:p-6 space-y-6">
+          <div><h2 className="text-xl font-bold">Settings</h2></div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <Card className="p-3 h-fit">
+              {[['academy', 'Academy'], ['users', 'Users'], ['payment', 'Payment']].map(([id, label]) => <button key={id} onClick={() => setSection(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 ${section === id ? 'bg-sky-50 text-sky-700' : 'text-gray-600 hover:bg-gray-50'}`}>{icons.Settings}{label}</button>)}
+            </Card>
+            <Card className="p-6 lg:col-span-3">
+              {section === 'academy' && <div className="space-y-6"><div><h3 className="text-lg font-semibold">Academy Settings</h3><p className="text-sm text-gray-500">Basic information</p></div><div className="grid grid-cols-2 gap-4"><Input label="Name" placeholder="SkateCoach Pro" /><Input label="Email" placeholder="contact@academy.com" /><Input label="Phone" placeholder="+91" /><Input label="Address" placeholder="Mumbai" /></div><div className="flex justify-end"><Button icon="Download">Save</Button></div></div>}
+              {section === 'users' && <div className="space-y-6"><div className="flex justify-between"><div><h3 className="text-lg font-semibold">Users</h3><p className="text-sm text-gray-500">Manage admins</p></div><Button icon="Plus">Add User</Button></div>{[['Admin User', 'admin@academy.com', 'Admin'], ['HR Manager', 'hr@academy.com', 'HR']].map(([n, e, r]) => <div key={e} className="flex justify-between p-4 bg-gray-50 rounded-lg"><div className="flex items-center gap-3"><Avatar name={n} size="sm" /><div><p className="font-medium">{n}</p><p className="text-sm text-gray-500">{e}</p></div></div><div className="flex items-center gap-3"><StatusBadge status="active" /><Button variant="ghost" size="sm" icon="Edit">Edit</Button></div></div>)}</div>}
+              {section === 'payment' && <div className="space-y-6"><div><h3 className="text-lg font-semibold">Payment Config</h3><p className="text-sm text-gray-500">Rates and cycles</p></div><div className="grid grid-cols-2 gap-4"><Input label="Default Rate (₹)" placeholder="500" /><Select label="Cycle" options={['Monthly', 'Bi-weekly']} /></div><div className="flex justify-end"><Button icon="Download">Save</Button></div></div>}
+            </Card>
+          </div>
+        </div>
+      );
+    };
+
+    // MAIN APP
+    function App() {
+      const [logged, setLogged] = useState(false);
+      const [role, setRole] = useState('admin');
+      const [page, setPage] = useState('dashboard');
+      const [sidebar, setSidebar] = useState(false);
+
+      const login = (r) => { setRole(r); setLogged(true); setPage('dashboard'); };
+      const titles = { dashboard: 'Dashboard', coaches: 'Coaches', locations: 'Locations', schedules: 'Schedules', attendance: 'Attendance', leave: 'Leave', payroll: 'Payroll', settings: 'Settings' };
+
+      const renderPage = () => {
+        switch (page) {
+          case 'dashboard': return <Dashboard role={role} />;
+          case 'coaches': return <CoachesPage role={role} />;
+          case 'locations': return <LocationsPage role={role} />;
+          case 'schedules': return <SchedulesPage role={role} />;
+          case 'attendance': return <AttendancePage role={role} />;
+          case 'leave': return <LeavePage role={role} />;
+          case 'payroll': return <PayrollPage role={role} />;
+          case 'settings': return <SettingsPage />;
+          default: return <Dashboard role={role} />;
+        }
+      };
+
+      if (!logged) return <LoginPage onLogin={login} />;
+
+      return (
+        <div className="min-h-screen bg-gray-50 flex">
+          <Sidebar page={page} setPage={setPage} isOpen={sidebar} onClose={() => setSidebar(false)} role={role} />
+          <div className="flex-1 flex flex-col min-w-0">
+            <Header onMenu={() => setSidebar(true)} title={titles[page]} />
+            <main className="flex-1 overflow-auto">{renderPage()}</main>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
